@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝宝性别竞猜 - 多人在线版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .online-badge {
+            background: #4caf50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-boy {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-girl {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin-top: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .bet-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .bet-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .bet-item:last-child {
+            border-bottom: none;
+        }
+
+        .bet-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bet-detail {
+            text-align: right;
+        }
+
+        .bet-gender {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .bet-gender.boy {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .bet-gender.girl {
+            background: #fce4ec;
+            color: #e91e63;
+        }
+
+        .bet-amount {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .bet-time {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .bet-item {
+                flex-wrap: wrap;
+            }
+
+            .bet-detail {
+                width: 100%;
+                text-align: left;
+                margin-top: 10px;
+                padding-left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>宝宝性别竞猜</h1>
+            <p>多人在线版 - 实时同步</p>
+            <span class="online-badge">🌐 在线多人</span>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div class="card">
+            <div class="card-header">投注</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="name">你的名字</label>
+                    <input type="text" id="name" placeholder="输入你的名字" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>选择性别</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="btn btn-boy" onclick="selectGender('男孩')">👦 男孩</button>
+                        <button type="button" class="btn btn-girl" onclick="selectGender('女孩')">👧 女孩</button>
+                    </div>
+                    <input type="hidden" id="gender">
+                </div>
+                <div class="form-group">
+                    <label for="amount">投注金额（元）</label>
+                    <input type="number" id="amount" placeholder="输入金额" min="1">
+                </div>
+                <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitBet()">提交投注</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">统计信息</div>
+            <div class="card-body">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">参与人数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalAmount">0</div>
+                        <div class="stat-label">总金额（元）</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="boyCount">0</div>
+                        <div class="stat-label">押男孩</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="girlCount">0</div>
+                        <div class="stat-label">押女孩</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-refresh" onclick="loadData()">🔄 刷新数据</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">投注记录（实时更新）</div>
+            <div class="card-body">
+                <div id="loading" class="loading" style="display: none;">加载中...</div>
+                <ul class="bet-list" id="betList"></ul>
+                <div id="emptyState" class="empty-state">
+                    <div class="icon">📝</div>
+                    <p>暂无投注记录，快来参与吧！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function selectGender(gender) {
+            document.getElementById('gender').value = gender;
+            document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
+                btn.style.opacity = '0.5';
+            });
+            if (gender === '男孩') {
+                document.querySelector('.btn-boy').style.opacity = '1';
+            } else {
+                document.querySelector('.btn-girl').style.opacity = '1';
+            }
+        }
+
+        async function submitBet() {
+            const name = document.getElementById('name').value.trim();
+            const gender = document.getElementById('gender').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!name) {
+                alert('请输入你的名字！');
+                return;
+            }
+            if (!gender) {
+                alert('请选择性别！');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                alert('请输入有效的金额！');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/bets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, gender, amount })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('投注成功！');
+                    document.getElementById('name').value = '';
+                    document.getElementById('gender').value = '';
+                    document.getElementById('amount').value = '';
+                    document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
+                        btn.style.opacity = '0.5';
+                    });
+                    loadData();
+                } else {
+                    showError(result.message || '投注失败');
+                }
+            } catch (error) {
+                showError('网络错误，请检查API服务器是否运行');
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交投注';
+            }
+        }
+
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch(`${API_BASE}/bets`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    renderBets(result.data);
+                    updateStats(result.data);
+                } else {
+                    showError(result.message || '加载失败');
+                }
+            } catch (error) {
+                showError('无法连接到服务器，请确保 api_server.py 正在运行');
+                console.error(error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderBets(bets) {
+            const listEl = document.getElementById('betList');
+            const emptyState = document.getElementById('emptyState');
+
+            listEl.innerHTML = '';
+
+            if (bets.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+
+                bets.slice().reverse().forEach(bet => {
+                    const li = document.createElement('li');
+                    li.className = 'bet-item';
+                    li.innerHTML = `
+                        <span class="bet-name">${bet.name}</span>
+                        <div class="bet-detail">
+                            <span class="bet-gender ${bet.gender === '男孩' ? 'boy' : 'girl'}">${bet.gender === '男孩' ? '👦' : '👧'} ${bet.gender}</span>
+                            <span class="bet-amount">¥${bet.amount}</span>
+                            <span class="bet-time">${bet.time}</span>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+        }
+
+        function updateStats(bets) {
+            const totalUsers = bets.length;
+            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
+            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
+            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalAmount').textContent = totalAmount;
+            document.getElementById('boyCount').textContent = boyCount;
+            document.getElementById('girlCount').textContent = girlCount;
+        }
+
+        // 初始加载
+        loadData();
+
+        // 自动刷新（每10秒）
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>
