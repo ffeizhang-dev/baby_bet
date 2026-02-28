@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝宝性别竞猜 - 多人在线版</title>
+    <title>宝宝性别竞猜</title>
     <style>
         * {
             margin: 0;
@@ -38,16 +38,6 @@
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
-        }
-
-        .online-badge {
-            background: #4caf50;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: inline-block;
-            margin-top: 10px;
         }
 
         .card {
@@ -117,12 +107,6 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
         }
 
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .btn-boy {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
@@ -131,8 +115,14 @@
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
         }
 
-        .btn-refresh {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .btn-draw {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 10px;
+        }
+
+        .btn-clear {
+            background: #f44336;
+            color: white;
             margin-top: 10px;
         }
 
@@ -164,8 +154,6 @@
 
         .bet-list {
             list-style: none;
-            max-height: 400px;
-            overflow-y: auto;
         }
 
         .bet-item {
@@ -223,6 +211,22 @@
             font-size: 0.85rem;
         }
 
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #cc0000;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -234,19 +238,65 @@
             margin-bottom: 15px;
         }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #999;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
             text-align: center;
+        }
+
+        .result-emoji {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .winners {
+            margin: 20px 0;
+            text-align: left;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .winners h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .winner-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .winner-item:last-child {
+            border-bottom: none;
         }
 
         @media (max-width: 600px) {
@@ -275,11 +325,8 @@
     <div class="container">
         <div class="header">
             <h1>宝宝性别竞猜</h1>
-            <p>多人在线版 - 实时同步</p>
-            <span class="online-badge">🌐 在线多人</span>
+            <p>猜猜是男孩还是女孩？押注赢大奖！</p>
         </div>
-
-        <div id="errorMessage" class="error-message" style="display: none;"></div>
 
         <div class="card">
             <div class="card-header">投注</div>
@@ -300,7 +347,7 @@
                     <label for="amount">投注金额（元）</label>
                     <input type="number" id="amount" placeholder="输入金额" min="1">
                 </div>
-                <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitBet()">提交投注</button>
+                <button type="button" class="btn btn-primary" onclick="submitBet()">提交投注</button>
             </div>
         </div>
 
@@ -325,35 +372,42 @@
                         <div class="stat-label">押女孩</div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-refresh" onclick="loadData()">🔄 刷新数据</button>
+                <button type="button" class="btn btn-draw" onclick="openDrawModal()">开奖</button>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-header">投注记录（实时更新）</div>
+            <div class="card-header">投注记录</div>
             <div class="card-body">
-                <div id="loading" class="loading" style="display: none;">加载中...</div>
                 <ul class="bet-list" id="betList"></ul>
                 <div id="emptyState" class="empty-state">
                     <div class="icon">📝</div>
                     <p>暂无投注记录，快来参与吧！</p>
                 </div>
+                <button type="button" class="btn btn-clear" onclick="clearAllBets()" style="display: none;" id="clearBtn">清空所有记录</button>
             </div>
         </div>
     </div>
 
-    <script>
-        // 本地开发：http://localhost:5000/api
-        // 生产环境：替换为你的Render.com后端地址
-        const API_BASE = 'http://localhost:5000/api';  // TODO: 部署后改为 https://your-app.onrender.com/api
+    <div class="modal" id="drawModal">
+        <div class="modal-content">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2 class="result-title" id="resultTitle">开奖结果</h2>
+            <div id="winnersList" class="winners"></div>
+            <button type="button" class="btn btn-primary" onclick="closeDrawModal()">关闭</button>
+        </div>
+    </div>
 
-        function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
-            setTimeout(() => {
-                errorEl.style.display = 'none';
-            }, 5000);
+    <script>
+        const STORAGE_KEY = 'baby_bet_data';
+
+        function getBets() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveBets(bets) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(bets));
         }
 
         function selectGender(gender) {
@@ -368,11 +422,10 @@
             }
         }
 
-        async function submitBet() {
+        function submitBet() {
             const name = document.getElementById('name').value.trim();
             const gender = document.getElementById('gender').value;
             const amount = parseInt(document.getElementById('amount').value);
-            const submitBtn = document.getElementById('submitBtn');
 
             if (!name) {
                 alert('请输入你的名字！');
@@ -387,73 +440,70 @@
                 return;
             }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = '提交中...';
+            const bets = getBets();
+            const bet = {
+                id: Date.now(),
+                name: name,
+                gender: gender,
+                amount: amount,
+                time: new Date().toLocaleString('zh-CN')
+            };
+            bets.push(bet);
+            saveBets(bets);
 
-            try {
-                const response = await fetch(`${API_BASE}/bets`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name, gender, amount })
-                });
+            document.getElementById('name').value = '';
+            document.getElementById('gender').value = '';
+            document.getElementById('amount').value = '';
+            document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
+                btn.style.opacity = '0.5';
+            });
 
-                const result = await response.json();
-
-                if (result.code === 0) {
-                    alert('投注成功！');
-                    document.getElementById('name').value = '';
-                    document.getElementById('gender').value = '';
-                    document.getElementById('amount').value = '';
-                    document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
-                        btn.style.opacity = '0.5';
-                    });
-                    loadData();
-                } else {
-                    showError(result.message || '投注失败');
-                }
-            } catch (error) {
-                showError('网络错误，请检查API服务器是否运行');
-                console.error(error);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '提交投注';
-            }
+            render();
+            alert('投注成功！');
         }
 
-        async function loadData() {
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
-
-            try {
-                const response = await fetch(`${API_BASE}/bets`);
-                const result = await response.json();
-
-                if (result.code === 0) {
-                    renderBets(result.data);
-                    updateStats(result.data);
-                } else {
-                    showError(result.message || '加载失败');
-                }
-            } catch (error) {
-                showError('无法连接到服务器，请确保 api_server.py 正在运行');
-                console.error(error);
-            } finally {
-                loading.style.display = 'none';
+        function deleteBet(id) {
+            if (!confirm('确定要删除这条投注记录吗？')) {
+                return;
             }
+            const bets = getBets();
+            const newBets = bets.filter(bet => bet.id !== id);
+            saveBets(newBets);
+            render();
         }
 
-        function renderBets(bets) {
+        function clearAllBets() {
+            if (!confirm('确定要清空所有投注记录吗？此操作不可恢复！')) {
+                return;
+            }
+            localStorage.removeItem(STORAGE_KEY);
+            render();
+        }
+
+        function render() {
+            const bets = getBets();
+
+            const totalUsers = bets.length;
+            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
+            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
+            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalAmount').textContent = totalAmount;
+            document.getElementById('boyCount').textContent = boyCount;
+            document.getElementById('girlCount').textContent = girlCount;
+
             const listEl = document.getElementById('betList');
             const emptyState = document.getElementById('emptyState');
-
+            const clearBtn = document.getElementById('clearBtn');
             listEl.innerHTML = '';
 
             if (bets.length === 0) {
                 emptyState.style.display = 'block';
+                clearBtn.style.display = 'none';
             } else {
                 emptyState.style.display = 'none';
+                clearBtn.style.display = 'inline-block';
 
                 bets.slice().reverse().forEach(bet => {
                     const li = document.createElement('li');
@@ -464,6 +514,7 @@
                             <span class="bet-gender ${bet.gender === '男孩' ? 'boy' : 'girl'}">${bet.gender === '男孩' ? '👦' : '👧'} ${bet.gender}</span>
                             <span class="bet-amount">¥${bet.amount}</span>
                             <span class="bet-time">${bet.time}</span>
+                            <button class="btn-delete" onclick="deleteBet(${bet.id})">删除</button>
                         </div>
                     `;
                     listEl.appendChild(li);
@@ -471,23 +522,73 @@
             }
         }
 
-        function updateStats(bets) {
-            const totalUsers = bets.length;
-            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
-            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
-            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
+        function openDrawModal() {
+            const bets = getBets();
+            if (bets.length === 0) {
+                alert('暂无投注记录！');
+                return;
+            }
 
-            document.getElementById('totalUsers').textContent = totalUsers;
-            document.getElementById('totalAmount').textContent = totalAmount;
-            document.getElementById('boyCount').textContent = boyCount;
-            document.getElementById('girlCount').textContent = girlCount;
+            const gender = prompt('请输入开奖结果（输入"男孩"或"女孩"）：');
+            if (!gender) return;
+
+            const resultGender = gender.trim();
+            if (resultGender !== '男孩' && resultGender !== '女孩') {
+                alert('请输入"男孩"或"女孩"！');
+                return;
+            }
+
+            const winners = bets.filter(bet => bet.gender === resultGender);
+            const losers = bets.filter(bet => bet.gender !== resultGender);
+
+            const modal = document.getElementById('drawModal');
+            const emoji = document.getElementById('resultEmoji');
+            const title = document.getElementById('resultTitle');
+            const winnersList = document.getElementById('winnersList');
+
+            emoji.textContent = resultGender === '男孩' ? '👦' : '👧';
+            title.textContent = `开奖结果是：${resultGender}`;
+
+            if (winners.length === 0) {
+                winnersList.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: #999;">😢 没有人猜对哦！</p>
+                        <p style="margin-top: 10px;">押${resultGender === '男孩' ? '女孩' : '男孩'}的有 ${losers.length} 人</p>
+                    </div>
+                `;
+            } else {
+                const winAmount = winners.reduce((sum, bet) => sum + bet.amount, 0);
+                let html = `
+                    <h3>🏆 猜对的人数：${winners.length} 人</h3>
+                    <p style="margin-bottom: 15px;">💯 猜对总金额：¥${winAmount}</p>
+                    <div class="winner-list">
+                `;
+                winners.forEach(winner => {
+                    html += `
+                        <div class="winner-item">
+                            <span>${winner.name}</span>
+                            <span>¥${winner.amount}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                winnersList.innerHTML = html;
+            }
+
+            modal.classList.add('active');
         }
 
-        // 初始加载
-        loadData();
+        function closeDrawModal() {
+            document.getElementById('drawModal').classList.remove('active');
+        }
 
-        // 自动刷新（每10秒）
-        setInterval(loadData, 10000);
+        document.getElementById('drawModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDrawModal();
+            }
+        });
+
+        render();
     </script>
 </body>
 </html>
