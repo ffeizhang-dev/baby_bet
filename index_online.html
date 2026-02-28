@@ -343,7 +343,9 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:5000/api';
+        // 本地开发：http://localhost:5000/api
+        // 生产环境：替换为你的Render.com后端地址
+        const API_BASE = 'http://localhost:5000/api';  // TODO: 部署后改为 https://your-app.onrender.com/api
 
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
