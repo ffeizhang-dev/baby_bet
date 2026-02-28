@@ -126,6 +126,42 @@
             margin-top: 10px;
         }
 
+        .btn-feishu {
+            background: linear-gradient(135deg, #00d9ff 0%, #00b8d4 100%);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .feishu-badge {
+            background: #00d9ff;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .sync-info {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #1976d2;
+            text-align: center;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -377,7 +413,48 @@
         </div>
 
         <div class="card">
-            <div class="card-header">投注记录</div>
+            <div class="card-header">
+                🤖 飞书机器人统计
+                <span class="feishu-badge">在线多人</span>
+            </div>
+            <div class="card-body">
+                <div id="feishuSyncInfo" class="sync-info" style="display: none;"></div>
+                <div id="feishuError" class="error-message" style="display: none;"></div>
+                <div class="stats" id="feishuStats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="feishuTotalUsers">-</div>
+                        <div class="stat-label">飞书参与人数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="feishuTotalAmount">-</div>
+                        <div class="stat-label">飞书总金额（元）</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="feishuBoyCount">-</div>
+                        <div class="stat-label">飞书押男孩</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="feishuGirlCount">-</div>
+                        <div class="stat-label">飞书押女孩</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-feishu" onclick="loadFeishuStats()">🔄 加载飞书统计</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">飞书投注记录</div>
+            <div class="card-body">
+                <ul class="bet-list" id="feishuBetList"></ul>
+                <div id="feishuEmptyState" class="empty-state">
+                    <div class="icon">🤖</div>
+                    <p>暂无飞书投注记录，点击上方按钮加载</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">投注记录（本地）</div>
             <div class="card-body">
                 <ul class="bet-list" id="betList"></ul>
                 <div id="emptyState" class="empty-state">
@@ -400,6 +477,8 @@
 
     <script>
         const STORAGE_KEY = 'baby_bet_data';
+        // 配置API地址 - 本地开发时使用localhost，部署后改为实际地址
+        const API_BASE = 'http://localhost:5000/api';  // TODO: 部署后改为你的实际API地址
 
         function getBets() {
             const data = localStorage.getItem(STORAGE_KEY);
@@ -587,6 +666,83 @@
                 closeDrawModal();
             }
         });
+
+        // ===== 飞书机器人统计功能 =====
+        async function loadFeishuStats() {
+            const syncInfo = document.getElementById('feishuSyncInfo');
+            const errorEl = document.getElementById('feishuError');
+
+            // 显示加载状态
+            syncInfo.textContent = '⏳ 正在从飞书多维表格加载数据...';
+            syncInfo.style.display = 'block';
+            errorEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/bets`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: 无法连接到API服务器`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    renderFeishuStats(result.data);
+                    syncInfo.textContent = `✅ 加载成功！更新时间: ${new Date().toLocaleTimeString('zh-CN')}`;
+                    setTimeout(() => {
+                        syncInfo.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || '加载失败');
+                }
+            } catch (error) {
+                console.error('加载飞书统计失败:', error);
+                syncInfo.style.display = 'none';
+                errorEl.textContent = `❌ ${error.message}\n\n请确保：\n1. api_server.py 正在运行 (python api_server.py)\n2. 飞书凭证已正确配置 (.env文件)\n3. 网络连接正常`;
+                errorEl.style.display = 'block';
+
+                // 显示空状态
+                renderFeishuStats([]);
+            }
+        }
+
+        function renderFeishuStats(bets) {
+            // 更新统计数字
+            const totalUsers = bets.length;
+            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
+            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
+            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
+
+            document.getElementById('feishuTotalUsers').textContent = totalUsers;
+            document.getElementById('feishuTotalAmount').textContent = totalAmount;
+            document.getElementById('feishuBoyCount').textContent = boyCount;
+            document.getElementById('feishuGirlCount').textContent = girlCount;
+
+            // 更新投注记录列表
+            const listEl = document.getElementById('feishuBetList');
+            const emptyState = document.getElementById('feishuEmptyState');
+            listEl.innerHTML = '';
+
+            if (bets.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+
+                bets.slice().reverse().forEach(bet => {
+                    const li = document.createElement('li');
+                    li.className = 'bet-item';
+                    li.innerHTML = `
+                        <span class="bet-name">${bet.name}</span>
+                        <div class="bet-detail">
+                            <span class="bet-gender ${bet.gender === '男孩' ? 'boy' : 'girl'}">${bet.gender === '男孩' ? '👦' : '👧'} ${bet.gender}</span>
+                            <span class="bet-amount">¥${bet.amount}</span>
+                            <span class="bet-time">${bet.time || '未知时间'}</span>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+        }
 
         render();
     </script>
