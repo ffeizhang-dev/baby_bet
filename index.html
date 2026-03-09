@@ -346,6 +346,58 @@
             color: #c62828;
         }
 
+        .rules-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rules-list li {
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            position: relative;
+            padding-left: 50px;
+            line-height: 1.6;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .rules-list li::before {
+            content: attr(data-number);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .rules-list li strong {
+            color: #667eea;
+        }
+
+        .rules-highlight {
+            background: #fff3cd;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin-top: 15px;
+            color: #856404;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 1.8rem;
@@ -374,6 +426,26 @@
             <h1>宝宝性别竞猜</h1>
             <p>猜猜是男孩还是女孩？押注赢大奖！</p>
             <div class="online-badge" id="onlineBadge">🔄 连接中...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">📋 竞猜规则</div>
+            <div class="card-body">
+                <ul class="rules-list">
+                    <li data-number="1">
+                        <strong>自由竞猜：</strong>随心所欲地猜测宝宝性别，想投多少就投多少！
+                    </li>
+                    <li data-number="2">
+                        <strong>猜对有奖：</strong>猜对性别的小伙伴，部分金额由功能件负责人支付，原投注金额全额退回！
+                    </li>
+                    <li data-number="3">
+                        <strong>爱心礼物：</strong>竞猜池总额将用于购买慰问礼物，一起看望霞姐和宝宝！
+                    </li>
+                </ul>
+                <div class="rules-highlight">
+                    💝 参与竞猜，不仅有机会赢奖金，还能为霞姐送上温暖的祝福！
+                </div>
+            </div>
         </div>
 
         <div class="card">
