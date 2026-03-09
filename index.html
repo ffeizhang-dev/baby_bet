@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝宝性别竞猜</title>
+    <title>宝宝性别竞猜 - 多人在线版</title>
     <style>
         * {
             margin: 0;
@@ -38,6 +38,22 @@
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
+        }
+
+        .online-badge {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .card {
@@ -126,42 +142,6 @@
             margin-top: 10px;
         }
 
-        .btn-feishu {
-            background: linear-gradient(135deg, #00d9ff 0%, #00b8d4 100%);
-            color: white;
-            margin-top: 10px;
-        }
-
-        .feishu-badge {
-            background: #00d9ff;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            display: inline-block;
-            margin-left: 10px;
-        }
-
-        .sync-info {
-            background: #e3f2fd;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            color: #1976d2;
-            text-align: center;
-        }
-
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -199,6 +179,18 @@
             padding: 15px;
             border-bottom: 1px solid #f0f0f0;
             transition: background-color 0.2s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .bet-item:hover {
@@ -207,6 +199,10 @@
 
         .bet-item:last-child {
             border-bottom: none;
+        }
+
+        .bet-item.new {
+            background-color: #fff9c4;
         }
 
         .bet-name {
@@ -335,6 +331,21 @@
             border-bottom: none;
         }
 
+        .sync-status {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .sync-status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
         @media (max-width: 600px) {
             .header h1 {
                 font-size: 1.8rem;
@@ -362,11 +373,13 @@
         <div class="header">
             <h1>宝宝性别竞猜</h1>
             <p>猜猜是男孩还是女孩？押注赢大奖！</p>
+            <div class="online-badge" id="onlineBadge">🔄 连接中...</div>
         </div>
 
         <div class="card">
             <div class="card-header">投注</div>
             <div class="card-body">
+                <div id="syncStatus" class="sync-status" style="display: none;"></div>
                 <div class="form-group">
                     <label for="name">你的名字</label>
                     <input type="text" id="name" placeholder="输入你的名字" autocomplete="off">
@@ -388,7 +401,7 @@
         </div>
 
         <div class="card">
-            <div class="card-header">统计信息</div>
+            <div class="card-header">实时统计</div>
             <div class="card-body">
                 <div class="stats">
                     <div class="stat-item">
@@ -409,59 +422,18 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-draw" onclick="openDrawModal()">开奖</button>
+                <button type="button" class="btn btn-clear" onclick="clearAllBets()">清空所有记录</button>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-header">
-                🤖 飞书机器人统计
-                <span class="feishu-badge">在线多人</span>
-            </div>
-            <div class="card-body">
-                <div id="feishuSyncInfo" class="sync-info" style="display: none;"></div>
-                <div id="feishuError" class="error-message" style="display: none;"></div>
-                <div class="stats" id="feishuStats">
-                    <div class="stat-item">
-                        <div class="stat-value" id="feishuTotalUsers">-</div>
-                        <div class="stat-label">飞书参与人数</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="feishuTotalAmount">-</div>
-                        <div class="stat-label">飞书总金额（元）</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="feishuBoyCount">-</div>
-                        <div class="stat-label">飞书押男孩</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="feishuGirlCount">-</div>
-                        <div class="stat-label">飞书押女孩</div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-feishu" onclick="loadFeishuStats()">🔄 加载飞书统计</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">飞书投注记录</div>
-            <div class="card-body">
-                <ul class="bet-list" id="feishuBetList"></ul>
-                <div id="feishuEmptyState" class="empty-state">
-                    <div class="icon">🤖</div>
-                    <p>暂无飞书投注记录，点击上方按钮加载</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">投注记录（本地）</div>
+            <div class="card-header">投注记录（实时同步）</div>
             <div class="card-body">
                 <ul class="bet-list" id="betList"></ul>
                 <div id="emptyState" class="empty-state">
                     <div class="icon">📝</div>
                     <p>暂无投注记录，快来参与吧！</p>
                 </div>
-                <button type="button" class="btn btn-clear" onclick="clearAllBets()" style="display: none;" id="clearBtn">清空所有记录</button>
             </div>
         </div>
     </div>
@@ -475,21 +447,87 @@
         </div>
     </div>
 
-    <script>
-        const STORAGE_KEY = 'baby_bet_data';
-        // 配置API地址 - 本地开发时使用localhost，部署后改为实际地址
-        const API_BASE = 'http://localhost:5000/api';  // TODO: 部署后改为你的实际API地址
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getDatabase, ref, push, onValue, remove, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
-        function getBets() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            return data ? JSON.parse(data) : [];
+        // ====== Firebase 配置 ======
+        // TODO: 替换为你的 Firebase 配置
+        const firebaseConfig = {
+            apiKey:  "AIzaSyAPnhhyuMHltKq5s4vz2-ttLfE-uQSO6dc",
+            authDomain: "babybet-realtime-database.firebaseapp.com",
+            databaseURL: "https://babybet-realtime-database-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "babybet-realtime-database",
+            storageBucket:  "babybet-realtime-database.firebasestorage.app",
+            messagingSenderId: "569987516507",
+            appId: "1:569987516507:web:b2f9c472efb818356f577e"
+        };
+
+        // 初始化 Firebase
+        let app, database, betsRef;
+        let isFirebaseReady = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            database = getDatabase(app);
+            betsRef = ref(database, 'bets');
+            isFirebaseReady = true;
+
+            // 设置实时监听
+            setupRealtimeListener();
+            updateOnlineStatus('✅ 在线同步');
+        } catch (error) {
+            console.error('Firebase 初始化失败:', error);
+            updateOnlineStatus('❌ 连接失败', true);
+            showSyncMessage('Firebase 配置错误，请检查配置信息', true);
         }
 
-        function saveBets(bets) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(bets));
+        // ====== 全局变量 ======
+        let allBets = [];
+        let lastBetId = null;
+
+        // ====== 更新在线状态 ======
+        function updateOnlineStatus(message, isError = false) {
+            const badge = document.getElementById('onlineBadge');
+            badge.textContent = message;
+            if (isError) {
+                badge.style.background = '#f44336';
+            } else {
+                badge.style.background = '#4caf50';
+            }
         }
 
-        function selectGender(gender) {
+        function showSyncMessage(message, isError = false) {
+            const el = document.getElementById('syncStatus');
+            el.textContent = message;
+            el.className = isError ? 'sync-status error' : 'sync-status';
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 3000);
+        }
+
+        // ====== 设置实时监听器 ======
+        function setupRealtimeListener() {
+            onValue(betsRef, (snapshot) => {
+                allBets = [];
+                snapshot.forEach((childSnapshot) => {
+                    const bet = childSnapshot.val();
+                    allBets.push({
+                        id: childSnapshot.key,
+                        ...bet
+                    });
+                });
+                render();
+            }, (error) => {
+                console.error('读取数据失败:', error);
+                updateOnlineStatus('❌ 同步失败', true);
+            });
+        }
+
+        // ====== 选择性别 ======
+        window.selectGender = function(gender) {
             document.getElementById('gender').value = gender;
             document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
                 btn.style.opacity = '0.5';
@@ -499,9 +537,15 @@
             } else {
                 document.querySelector('.btn-girl').style.opacity = '1';
             }
-        }
+        };
 
-        function submitBet() {
+        // ====== 提交投注 ======
+        window.submitBet = async function() {
+            if (!isFirebaseReady) {
+                alert('Firebase 未就绪，请检查配置！');
+                return;
+            }
+
             const name = document.getElementById('name').value.trim();
             const gender = document.getElementById('gender').value;
             const amount = parseInt(document.getElementById('amount').value);
@@ -519,53 +563,69 @@
                 return;
             }
 
-            const bets = getBets();
             const bet = {
-                id: Date.now(),
                 name: name,
                 gender: gender,
                 amount: amount,
-                time: new Date().toLocaleString('zh-CN')
+                time: new Date().toLocaleString('zh-CN'),
+                timestamp: Date.now()
             };
-            bets.push(bet);
-            saveBets(bets);
 
-            document.getElementById('name').value = '';
-            document.getElementById('gender').value = '';
-            document.getElementById('amount').value = '';
-            document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
-                btn.style.opacity = '0.5';
-            });
+            try {
+                await push(betsRef, bet);
 
-            render();
-            alert('投注成功！');
-        }
+                // 清空表单
+                document.getElementById('name').value = '';
+                document.getElementById('gender').value = '';
+                document.getElementById('amount').value = '';
+                document.querySelectorAll('.btn-boy, .btn-girl').forEach(btn => {
+                    btn.style.opacity = '0.5';
+                });
 
-        function deleteBet(id) {
+                showSyncMessage('✅ 投注成功！所有人都能看到了');
+            } catch (error) {
+                console.error('提交投注失败:', error);
+                alert('投注失败：' + error.message);
+            }
+        };
+
+        // ====== 删除投注 ======
+        window.deleteBet = async function(betId) {
             if (!confirm('确定要删除这条投注记录吗？')) {
                 return;
             }
-            const bets = getBets();
-            const newBets = bets.filter(bet => bet.id !== id);
-            saveBets(newBets);
-            render();
-        }
 
-        function clearAllBets() {
+            try {
+                const betRef = ref(database, `bets/${betId}`);
+                await remove(betRef);
+                showSyncMessage('✅ 删除成功');
+            } catch (error) {
+                console.error('删除失败:', error);
+                alert('删除失败：' + error.message);
+            }
+        };
+
+        // ====== 清空所有投注 ======
+        window.clearAllBets = async function() {
             if (!confirm('确定要清空所有投注记录吗？此操作不可恢复！')) {
                 return;
             }
-            localStorage.removeItem(STORAGE_KEY);
-            render();
-        }
 
+            try {
+                await set(betsRef, null);
+                showSyncMessage('✅ 已清空所有记录');
+            } catch (error) {
+                console.error('清空失败:', error);
+                alert('清空失败：' + error.message);
+            }
+        };
+
+        // ====== 渲染页面 ======
         function render() {
-            const bets = getBets();
-
-            const totalUsers = bets.length;
-            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
-            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
-            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
+            const totalUsers = allBets.length;
+            const totalAmount = allBets.reduce((sum, bet) => sum + bet.amount, 0);
+            const boyCount = allBets.filter(bet => bet.gender === '男孩').length;
+            const girlCount = allBets.filter(bet => bet.gender === '女孩').length;
 
             document.getElementById('totalUsers').textContent = totalUsers;
             document.getElementById('totalAmount').textContent = totalAmount;
@@ -574,36 +634,48 @@
 
             const listEl = document.getElementById('betList');
             const emptyState = document.getElementById('emptyState');
-            const clearBtn = document.getElementById('clearBtn');
             listEl.innerHTML = '';
 
-            if (bets.length === 0) {
+            if (allBets.length === 0) {
                 emptyState.style.display = 'block';
-                clearBtn.style.display = 'none';
             } else {
                 emptyState.style.display = 'none';
-                clearBtn.style.display = 'inline-block';
 
-                bets.slice().reverse().forEach(bet => {
+                // 按时间戳倒序排序
+                const sortedBets = [...allBets].sort((a, b) => b.timestamp - a.timestamp);
+
+                sortedBets.forEach(bet => {
                     const li = document.createElement('li');
                     li.className = 'bet-item';
+
+                    // 高亮最新的投注
+                    if (lastBetId !== null && bet.id !== lastBetId && bet.id === sortedBets[0].id) {
+                        li.classList.add('new');
+                        setTimeout(() => li.classList.remove('new'), 2000);
+                    }
+
                     li.innerHTML = `
                         <span class="bet-name">${bet.name}</span>
                         <div class="bet-detail">
                             <span class="bet-gender ${bet.gender === '男孩' ? 'boy' : 'girl'}">${bet.gender === '男孩' ? '👦' : '👧'} ${bet.gender}</span>
                             <span class="bet-amount">¥${bet.amount}</span>
                             <span class="bet-time">${bet.time}</span>
-                            <button class="btn-delete" onclick="deleteBet(${bet.id})">删除</button>
+                            <button class="btn-delete" onclick="deleteBet('${bet.id}')">删除</button>
                         </div>
                     `;
                     listEl.appendChild(li);
                 });
+
+                // 更新最新投注ID
+                if (sortedBets.length > 0) {
+                    lastBetId = sortedBets[0].id;
+                }
             }
         }
 
-        function openDrawModal() {
-            const bets = getBets();
-            if (bets.length === 0) {
+        // ====== 开奖 ======
+        window.openDrawModal = function() {
+            if (allBets.length === 0) {
                 alert('暂无投注记录！');
                 return;
             }
@@ -617,8 +689,8 @@
                 return;
             }
 
-            const winners = bets.filter(bet => bet.gender === resultGender);
-            const losers = bets.filter(bet => bet.gender !== resultGender);
+            const winners = allBets.filter(bet => bet.gender === resultGender);
+            const losers = allBets.filter(bet => bet.gender !== resultGender);
 
             const modal = document.getElementById('drawModal');
             const emoji = document.getElementById('resultEmoji');
@@ -655,96 +727,17 @@
             }
 
             modal.classList.add('active');
-        }
+        };
 
-        function closeDrawModal() {
+        window.closeDrawModal = function() {
             document.getElementById('drawModal').classList.remove('active');
-        }
+        };
 
         document.getElementById('drawModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeDrawModal();
             }
         });
-
-        // ===== 飞书机器人统计功能 =====
-        async function loadFeishuStats() {
-            const syncInfo = document.getElementById('feishuSyncInfo');
-            const errorEl = document.getElementById('feishuError');
-
-            // 显示加载状态
-            syncInfo.textContent = '⏳ 正在从飞书多维表格加载数据...';
-            syncInfo.style.display = 'block';
-            errorEl.style.display = 'none';
-
-            try {
-                const response = await fetch(`${API_BASE}/bets`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: 无法连接到API服务器`);
-                }
-
-                const result = await response.json();
-
-                if (result.code === 0) {
-                    renderFeishuStats(result.data);
-                    syncInfo.textContent = `✅ 加载成功！更新时间: ${new Date().toLocaleTimeString('zh-CN')}`;
-                    setTimeout(() => {
-                        syncInfo.style.display = 'none';
-                    }, 3000);
-                } else {
-                    throw new Error(result.message || '加载失败');
-                }
-            } catch (error) {
-                console.error('加载飞书统计失败:', error);
-                syncInfo.style.display = 'none';
-                errorEl.textContent = `❌ ${error.message}\n\n请确保：\n1. api_server.py 正在运行 (python api_server.py)\n2. 飞书凭证已正确配置 (.env文件)\n3. 网络连接正常`;
-                errorEl.style.display = 'block';
-
-                // 显示空状态
-                renderFeishuStats([]);
-            }
-        }
-
-        function renderFeishuStats(bets) {
-            // 更新统计数字
-            const totalUsers = bets.length;
-            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
-            const boyCount = bets.filter(bet => bet.gender === '男孩').length;
-            const girlCount = bets.filter(bet => bet.gender === '女孩').length;
-
-            document.getElementById('feishuTotalUsers').textContent = totalUsers;
-            document.getElementById('feishuTotalAmount').textContent = totalAmount;
-            document.getElementById('feishuBoyCount').textContent = boyCount;
-            document.getElementById('feishuGirlCount').textContent = girlCount;
-
-            // 更新投注记录列表
-            const listEl = document.getElementById('feishuBetList');
-            const emptyState = document.getElementById('feishuEmptyState');
-            listEl.innerHTML = '';
-
-            if (bets.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-
-                bets.slice().reverse().forEach(bet => {
-                    const li = document.createElement('li');
-                    li.className = 'bet-item';
-                    li.innerHTML = `
-                        <span class="bet-name">${bet.name}</span>
-                        <div class="bet-detail">
-                            <span class="bet-gender ${bet.gender === '男孩' ? 'boy' : 'girl'}">${bet.gender === '男孩' ? '👦' : '👧'} ${bet.gender}</span>
-                            <span class="bet-amount">¥${bet.amount}</span>
-                            <span class="bet-time">${bet.time || '未知时间'}</span>
-                        </div>
-                    `;
-                    listEl.appendChild(li);
-                });
-            }
-        }
-
-        render();
     </script>
 </body>
 </html>
